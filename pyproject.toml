@@ -1,0 +1,18 @@
+[project]
+name = "python-benchmark-suite"
+version = "1.0.0"
+description = "Cross-version Python benchmark suite with automatic summary generation."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Glauber Brennon", email = "glauberbrennon@gmail.com" }
+]
+
+dependencies = [
+    "pydantic>=2.0",
+    "dataclasses-json>=0.6",
+]
+
+[tool.uv]
+python-downloads = "auto"
+cache-dir = ".uv_cache"
