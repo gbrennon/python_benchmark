@@ -1,18 +1,18 @@
 # 🧪 Python Benchmark Suite
 
-A reproducible, extensible framework for benchmarking **Python runtime behavior** across multiple interpreter versions managed by [pyenv](https://github.com/pyenv/pyenv).
+This repository provides a reproducible framework for benchmarking Python language behavior and runtime performance across **multiple interpreter versions** managed via [pyenv](https://github.com/pyenv/pyenv).
 
-This suite allows engineers to **measure performance differences** (e.g., property access vs. direct attribute access, dataclass instantiation, etc.) across versions such as Python 3.9 → 3.14, with a focus on reproducibility and isolation.
+It is designed for senior engineers and performance-minded developers who need to **quantify differences in execution cost** (e.g., attribute access, function call overhead, dataclass vs. property performance, etc.) between Python releases.
 
 ---
 
 ## ⚙️ Features
 
-- 🔍 **Automatic version detection** — dynamically discovers all Python interpreters installed via `pyenv`.
-- 📂 **Structured benchmarks directory** — executes all `.py` scripts in `benchmarks/`.
+- 🔍 **Version-to-version comparison** — run the same benchmark across multiple Python versions.
+- 🧩 **Automatic benchmark discovery** — any file inside `benchmarks/` ending with `_benchmark.py` is picked up automatically.
 - 🧱 **Isolated execution** — each benchmark runs independently for every interpreter.
-- 🧩 **Automatic discovery** — no need to register benchmarks manually.
-- 📈 **Version-to-version comparison** — visualize runtime differences across interpreters.
+- 📈 **Structured output** — generates Markdown summary tables across Python versions and approaches.
+- 🧰 **Template generator** — create new benchmarks quickly using `./new_benchmark.sh`.
 
 ---
 
@@ -20,88 +20,130 @@ This suite allows engineers to **measure performance differences** (e.g., proper
 
 ```
 python_benchmark/
-├── benchmarks/
-│   └── property_benchmark.py    # Current benchmark
-├── run.sh                       # Benchmark orchestrator
-└── README.md                    # Documentation
+├── run.sh             # Benchmark orchestrator
+├── new_benchmark.sh   # Template generator for new benchmarks
+├── benchmarks/        # Your benchmark scripts (*.py)
+└── results/           # Auto-generated benchmark results (gitignored)
 ```
+
+Each Python script placed inside `benchmarks/` with the suffix `_benchmark.py` will be automatically discovered and executed by `run.sh`.
+
+You can **implement any benchmark you want** — whether testing a micro-optimization, comparing architectural patterns, or evaluating performance between frameworks. As long as the file prints labeled results (e.g., `Approach A: <time>`), it will be included in the generated summary tables.
 
 ---
 
 ## 🧰 Requirements
 
 - **Linux / macOS**
-- [pyenv](https://github.com/pyenv/pyenv) installed and configured
+- **pyenv** installed and configured  
   ```bash
   curl https://pyenv.run | bash
   ```
-- One or more Python interpreters installed:
+- Install a few Python versions to test:
   ```bash
   pyenv install 3.9.21
   pyenv install 3.10.14
   pyenv install 3.12.11
   pyenv install 3.13.4
-  pyenv install 3.14.0b2t
+  pyenv install 3.14.0
   ```
 
 ---
 
 ## 🚀 Running Benchmarks
 
-1. Ensure `pyenv` is active in your shell:
-   ```bash
-   eval "$(pyenv init -)"
-   ```
+To run all benchmarks sequentially across all Python versions:
 
-2. Run the full suite:
-   ```bash
-   ./run.sh
-   ```
+```bash
+./run.sh
+```
 
-3. The script will:
-   - Detect every installed Python version.
-   - Execute all benchmark files in the `benchmarks/` directory.
-   - Display results for each interpreter independently.
+To run benchmarks and **generate a Markdown summary report**:
 
-Example output:
+```bash
+./run.sh --summary-table
+```
+
+This will produce a file at:
 
 ```
-🚀 Benchmark file: property_benchmark.py
-🐍 Python 3.12.11
----------------------------------------
-Direct attribute: 0.26
-Property access: 0.71
----------------------------------------
-✅ Finished benchmark: property_benchmark.py
+results/summary.md
 ```
+
+Each benchmark produces its own section in that file.
 
 ---
 
-## 📊 Results Summary (Template)
+## 🧩 Creating a New Benchmark
 
-| Python Version | Benchmark File           | Metric / Description           | Result (s) | Notes |
-|----------------|--------------------------|--------------------------------|-------------|-------|
-| 3.9.21         | property_benchmark.py     | Property access (10M calls)    | 0.70        |       |
-| 3.10.14        | property_benchmark.py     | Property access (10M calls)    | 0.68        |       |
-| 3.12.11        | property_benchmark.py     | Property access (10M calls)    | 0.65        | Fastest |
-| 3.14.0b2t      | property_benchmark.py     | Property access (10M calls)    | 0.64        | Beta version |
-| ...            | ...                      | ...                            | ...         | ...   |
+You can generate a new benchmark template quickly:
 
-> You can extend this table after each run by copying values from the terminal or logs.
+```bash
+./new_benchmark.sh dict_vs_list
+```
+
+This creates a file at `benchmarks/dict_vs_list_benchmark.py` pre-populated with a minimal benchmark template using Python’s `timeit` module.
+
+After generation, you can modify it to benchmark whatever behavior, library, or architectural pattern you want to measure — for example:
+
+- Comparing direct vs. property access.
+- Comparing dataclass instantiation vs. manual `__init__`.
+- Comparing service-layer orchestration vs. direct domain calls.
+
+As long as your benchmark prints labeled times in the format:
+
+```
+Approach Name: <seconds>
+```
+
+the results will appear correctly in the final summary.
+
+---
+
+## 📊 Example Results
+
+When you run the suite with `--summary-table`, all results are saved to:
+
+```
+results/summary.md
+```
+
+Each benchmark script produces a **separate Markdown table** showing all Python versions as rows and each tested approach as a column.
+
+### Example 1 — `property_benchmark.py`
+
+| Python Version | Property Access (s) | Direct Access (s) |
+|----------------|--------------------:|------------------:|
+| 3.9.21         | 0.287390            | 0.877322          |
+| 3.14.0         | 0.126226            | 0.283366          |
+
+➡️ In this benchmark, `Property Access` shows a **~3× speed improvement** between Python 3.9 and 3.14, indicating significant runtime optimizations in attribute handling.
+
+---
+
+### Example 2 — `json_vs_pydantic_validation_benchmark.py`
+
+| Python Version | Dataclass Validation (s) | JSON Parse Only (s) | Pydantic Validation (s) |
+|----------------|--------------------------:|---------------------:|-------------------------:|
+| 3.9.21         | 0.210205                  | 0.286122             | 0.132171                 |
+| 3.14.0         | 0.184083                  | 0.238300             | 0.128887                 |
+
+➡️ Here, both `Dataclass Validation` and `Pydantic Validation` exhibit **minor runtime gains**, while JSON parsing overhead remains relatively stable across versions.
 
 ---
 
 ## 🧠 Design Philosophy
 
-This suite prioritizes **clarity, repeatability, and isolation**:
+This project embodies **clarity, reproducibility, and isolation**:
 
-- Every benchmark executes in a clean, self-contained environment.
-- `pyenv` ensures consistent interpreter selection and reproducibility.
-- The design encourages adding benchmarks without modifying orchestration code.
+- Every benchmark runs independently of global state.
+- pyenv ensures consistent interpreter environments.
+- Bash automation allows exact replication of runs across machines.
+- Dependencies are managed reproducibly via `uv` and `pyproject.toml`.
 
 ---
 
 ## 🧾 License
 
-Licensed under the **MIT License**.  
+This project is licensed under the **MIT License**.  
 See [`LICENSE`](LICENSE) for details.
