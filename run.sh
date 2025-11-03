@@ -8,7 +8,7 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 unset PYENV_VERSION
 
-VERSIONS=("3.9.21" "3.10.14" "3.12.3" "3.12.11" "3.13.4" "3.14.0b2t")
+VERSIONS=($(pyenv versions --bare))
 BENCHMARKS=(*_benchmark.py)
 
 clear
