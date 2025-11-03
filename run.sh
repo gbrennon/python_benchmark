@@ -8,38 +8,38 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 unset PYENV_VERSION
 
+BENCH_DIR="benchmarks"
 VERSIONS=($(pyenv versions --bare))
-BENCHMARKS=(*_benchmark.py)
+BENCHMARKS=("$BENCH_DIR"/*.py)
 
 clear
-
 echo "======================================="
 echo "========= Running Benchmarks =========="
 echo "======================================="
 
+if [[ ! -d "$BENCH_DIR" ]]; then
+    echo "❌ Benchmarks directory not found: $(pwd)/$BENCH_DIR"
+    exit 1
+fi
+
 if [[ ${#BENCHMARKS[@]} -eq 0 ]]; then
-    echo "❌ No benchmark scripts found matching *_benchmark.py in $(pwd)"
+    echo "❌ No benchmark scripts found in $(pwd)/$BENCH_DIR"
     exit 1
 fi
 
 for benchmark in "${BENCHMARKS[@]}"; do
-    echo "🚀 Benchmark file: $benchmark"
+    echo
+    echo "🚀 Benchmark file: $(basename "$benchmark")"
     echo "======================================="
 
     for version in "${VERSIONS[@]}"; do
         echo
         echo "🐍 Python $version"
-        echo
         echo "---------------------------------------"
 
         if pyenv shell "$version" 2>/dev/null; then
-            if [[ -f "$benchmark" ]]; then
-                echo "▶️  Running $benchmark with Python $version ..."
-                python "$benchmark" || echo "⚠️  Benchmark failed for $benchmark on Python $version"
-            else
-                echo "❌ Benchmark file not found: $benchmark"
-                break
-            fi
+            echo "▶️  Running $(basename "$benchmark") with Python $version ..."
+            python "$benchmark" || echo "⚠️  Benchmark failed for $(basename "$benchmark") on Python $version"
         else
             echo "❌ pyenv could not activate Python $version (is it installed?)"
         fi
@@ -48,14 +48,14 @@ for benchmark in "${BENCHMARKS[@]}"; do
     done
 
     echo "======================================="
-    echo "✅ Finished benchmark: $benchmark"
+    echo "✅ Finished benchmark: $(basename "$benchmark")"
     echo "======================================="
 done
 
-# --- CLEANUP ---
 pyenv shell --unset || true
 unset PYENV_VERSION
 
+echo
 echo "======================================="
 echo "======= All Benchmarks Complete ======="
 echo "======================================="
