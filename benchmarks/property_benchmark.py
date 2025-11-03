@@ -1,25 +1,39 @@
-import time
+"""
+Property Benchmark
 
+Compares direct attribute access vs property access.
+Compatible with run.sh summary-table parser.
+"""
+
+import platform
+import timeit
+
+
+def run_benchmark() -> None:
+    N = 10_000_000
+
+    setup_code = """
 class Entity:
     def __init__(self):
         self._id = 123
     @property
     def id(self):
         return self._id
-
 entity = Entity()
-N = 10_000_000
+"""
 
-#_ = entity.id
+    tests = {
+        "Direct Access": "entity._id",
+        "Property Access": "entity.id",
+    }
 
-start = time.perf_counter()
-for _ in range(N):
-    entity._id
-end = time.perf_counter()
-print(f"Direct attribute: {(end - start):.4f} seconds")
+    print(f"Benchmark: property_benchmark.py")
+    print(f"Python: {platform.python_version()}")
 
-start = time.perf_counter()
-for _ in range(N):
-    entity.id
-end = time.perf_counter()
-print(f"Property access: {(end - start):.4f} seconds")
+    for name, stmt in tests.items():
+        t = timeit.timeit(stmt, setup=setup_code, number=N)
+        print(f"{name}: {t:.6f}")
+
+
+if __name__ == "__main__":
+    run_benchmark()
